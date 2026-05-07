@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uni Tracker — Autumn 2026</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0d0d12;
+    --panel:#13131c;
+    --panel2:#1a1a26;
+    --border:#1f1f30;
+    --border2:#2a2a40;
+    --text:#e2e2f0;
+    --muted:#888899;
+    --dim:#555566;
+    --qc:#a78bfa;--qc-bg:rgba(167,139,250,0.1);--qc-border:rgba(167,139,250,0.25);
+    --dsa:#38bdf8;--dsa-bg:rgba(56,189,248,0.1);--dsa-border:rgba(56,189,248,0.25);
+    --ap:#34d399;--ap-bg:rgba(52,211,153,0.1);--ap-border:rgba(52,211,153,0.25);
+    --va:#fb923c;--va-bg:rgba(251,146,60,0.1);--va-border:rgba(251,146,60,0.25);
+    --red:#f87171;--red-bg:rgba(248,113,113,0.1);
+    --amber:#fbbf24;--amber-bg:rgba(251,191,36,0.1);
+    --green:#4ade80;--green-bg:rgba(74,222,128,0.1);
+  }
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+  .container{max-width:960px;margin:0 auto;padding:24px 16px}
+
+  /* Header */
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+  .header-left h1{font-size:20px;font-weight:600;letter-spacing:-0.3px}
+  .header-left p{font-size:12px;color:var(--muted);margin-top:3px}
+  .week-badge{background:var(--panel2);border:1px solid var(--border2);border-radius:8px;padding:8px 16px;text-align:center}
+  .week-badge .wnum{font-size:24px;font-weight:700;color:var(--qc)}
+  .week-badge .wlabel{font-size:11px;color:var(--muted)}
+
+  /* Metric grid */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:24px}
+  .metric{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .metric .label{font-size:11px;color:var(--muted);margin-bottom:6px}
+  .metric .value{font-size:22px;font-weight:700}
+  .metric .sub{font-size:11px;color:var(--dim);margin-top:2px}
+
+  /* Section title */
+  .section-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px}
+
+  /* Countdown pills */
+  .countdowns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+  .countdown-pill{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:8px}
+  .countdown-pill .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .countdown-pill .days{font-weight:700;font-size:13px}
+  .countdown-pill .desc{color:var(--muted)}
+
+  /* Big assignment cards */
+  .big-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:24px}
+  .big-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;border-left:3px solid}
+  .big-card .subject-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:8px}
+  .big-card .title{font-size:14px;font-weight:600;margin-bottom:4px}
+  .big-card .desc{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+  .big-card .due{font-size:12px;font-weight:600;margin-bottom:6px}
+  .big-card .tip{font-size:11px;padding:6px 8px;border-radius:6px;line-height:1.5}
+  .big-card .weight-tag{font-size:20px;font-weight:800;float:right;margin-top:-2px}
+
+  /* Progress bar */
+  .progress-wrap{margin-top:10px}
+  .progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .progress-bar{height:4px;background:var(--border2);border-radius:2px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:2px;transition:width 0.3s}
+
+  /* Attack plan */
+  .attack-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px}
+  .attack-day{padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:flex-start}
+  .attack-day:last-child{border-bottom:none;padding-bottom:0}
+  .attack-day .day-label{min-width:90px;font-size:12px;font-weight:700;color:var(--muted);padding-top:1px}
+  .attack-day .day-content{flex:1}
+  .attack-day .day-content .focus{font-size:13px;font-weight:600;margin-bottom:4px}
+  .attack-day .day-content .tasks{font-size:12px;color:var(--muted);line-height:1.6}
+  .day-free{border-left:3px solid var(--green)}
+  .day-limited{border-left:3px solid var(--amber)}
+  .day-blocked{border-left:3px solid var(--dim)}
+
+  /* Week tabs */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{padding:6px 14px;border:1px solid var(--border2);border-radius:20px;background:transparent;cursor:pointer;font-size:12px;color:var(--muted);transition:all 0.15s;font-family:inherit}
+  .tab:hover{border-color:var(--border2);background:var(--panel2)}
+  .tab.active{background:var(--panel2);color:var(--text);border-color:var(--border2)}
+  .tab.current{border-color:var(--amber);color:var(--amber)}
+
+  /* Task list */
+  .week-panel{display:none}
+  .week-panel.active{display:block}
+  .free-windows{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .free-window{background:var(--green-bg);border:1px solid rgba(74,222,128,0.2);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--green)}
+  .task-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+  .task-item:last-child{border-bottom:none}
+  .task-item.done .task-text{opacity:0.35;text-decoration:line-through}
+  .checkbox{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:3px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-top:1px;background:transparent}
+  .checkbox.checked{background:var(--green-bg);border-color:var(--green)}
+  .checkbox.checked::after{content:'✓';font-size:10px;color:var(--green)}
+  .task-badge{font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;display:inline-block;margin-bottom:3px}
+  .task-text .title{font-size:13px;font-weight:500;margin-bottom:2px}
+  .task-text .detail{font-size:11px;color:var(--muted)}
+  .task-weight{font-size:11px;font-weight:700;margin-left:auto;padding-top:1px;flex-shrink:0}
+  .rec{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.6}
+
+  /* Status pill */
+  .status-urgent{background:var(--red-bg);border:1px solid rgba(248,113,113,0.3);color:var(--red);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700}
+  .status-warn{background:var(--amber-bg);border:1px solid rgba(251,191,36,0.3);color:var(--amber);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700}
+  .status-ok{background:var(--green-bg);border:1px solid rgba(74,222,128,0.3);color:var(--green);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700}
+
+  /* Notes */
+  .notes-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px}
+  .notes-section textarea{width:100%;background:var(--panel2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:10px;resize:vertical;min-height:80px;margin-top:10px;line-height:1.5}
+  .notes-section textarea:focus{outline:none;border-color:var(--qc)}
+  .notes-save{margin-top:8px;padding:5px 14px;background:var(--panel2);border:1px solid var(--border2);border-radius:6px;color:var(--muted);cursor:pointer;font-size:12px;font-family:inherit}
+  .notes-save:hover{color:var(--text);border-color:var(--border2)}
+  .saved-msg{font-size:11px;color:var(--green);margin-left:8px;opacity:0;transition:opacity 0.3s}
+
+  /* Footer */
+  footer{text-align:center;font-size:11px;color:var(--dim);padding:24px 0 12px}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>📚 Uni Tracker — Autumn 2026</h1>
+      <p id="date-display">Loading...</p>
+    </div>
+    <div class="week-badge">
+      <div class="wnum" id="current-week">W10</div>
+      <div class="wlabel">of 14</div>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="label">Weeks remaining</div>
+      <div class="value" id="weeks-left">4</div>
+      <div class="sub">until Week 14 ends</div>
+    </div>
+    <div class="metric">
+      <div class="label">Days to DSA A2</div>
+      <div class="value" style="color:var(--red)" id="days-dsa">—</div>
+      <div class="sub">May 22 · 30%</div>
+    </div>
+    <div class="metric">
+      <div class="label">Days to QC project</div>
+      <div class="value" style="color:var(--qc)" id="days-qc">—</div>
+      <div class="sub">Jun 5 · 20%</div>
+    </div>
+    <div class="metric">
+      <div class="label">DSA exam weight</div>
+      <div class="value" style="color:var(--dsa)">50%</div>
+      <div class="sub">biggest single item</div>
+    </div>
+  </div>
+
+  <!-- Countdowns -->
+  <div class="section-title">Deadline countdown</div>
+  <div class="countdowns" id="countdowns"></div>
+
+  <!-- Big assignments -->
+  <div class="section-title" style="margin-top:8px">Major assignments</div>
+  <div class="big-grid">
+    <div class="big-card" style="border-color:var(--red)">
+      <div style="display:flex;justify-content:space-between">
+        <span class="subject-badge" style="background:var(--dsa-bg);color:var(--dsa)">COMP2009 · DSA</span>
+        <span class="weight-tag" style="color:var(--red)">30%</span>
+      </div>
+      <div class="title">Assignment 2</div>
+      <div class="desc">~600–800 lines code + 4 A4 report. Trees/graphs + complexity analysis. Demo in class Week 14.</div>
+      <div class="due" style="color:var(--red)">Due Fri May 22, 5 pm</div>
+      <div class="tip" style="background:var(--red-bg);color:var(--red)">⚡ Start this Tuesday. 2 build weeks. Submit to vUWS + in-class demo.</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress</span><span id="dsa-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="dsa-bar" style="width:0%;background:var(--red)"></div></div>
+        <input type="range" min="0" max="100" value="0" id="dsa-slider" style="width:100%;margin-top:6px;accent-color:var(--red)" oninput="updateProgress('dsa',this.value)">
+      </div>
+    </div>
+    <div class="big-card" style="border-color:var(--qc)">
+      <div style="display:flex;justify-content:space-between">
+        <span class="subject-badge" style="background:var(--qc-bg);color:var(--qc)">COMP3033 · Quantum</span>
+        <span class="weight-tag" style="color:var(--qc)">20%</span>
+      </div>
+      <div class="title">Applied project</div>
+      <div class="desc">Maths derivations + source code + report as PDF. Est. 30 hrs. Submit to Turnitin via vUWS.</div>
+      <div class="due" style="color:var(--qc)">Due Fri Jun 5, 9 pm</div>
+      <div class="tip" style="background:var(--qc-bg);color:var(--qc)">🎯 Target ~80% done by May 13. Chip weekly on Tue/Fri.</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress</span><span id="qc-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="qc-bar" style="width:0%;background:var(--qc)"></div></div>
+        <input type="range" min="0" max="100" value="0" id="qc-slider" style="width:100%;margin-top:6px;accent-color:var(--qc)" oninput="updateProgress('qc',this.value)">
+      </div>
+    </div>
+    <div class="big-card" style="border-color:var(--ap)">
+      <div style="display:flex;justify-content:space-between">
+        <span class="subject-badge" style="background:var(--ap-bg);color:var(--ap)">COMP1013 · Analytics Prog</span>
+        <span class="weight-tag" style="color:var(--ap)">40%</span>
+      </div>
+      <div class="title">R assignment</div>
+      <div class="desc">RMarkdown PDF report (~2000 words) + Git repo. 50% thresholded by oral exam. Commit regularly.</div>
+      <div class="due" style="color:var(--ap)">Due Week 13 (~May 29)</div>
+      <div class="tip" style="background:var(--ap-bg);color:var(--ap)">📁 Init Git repo Day 1. Spread commits — they check activity, not just code.</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress</span><span id="ap-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="ap-bar" style="width:0%;background:var(--ap)"></div></div>
+        <input type="range" min="0" max="100" value="0" id="ap-slider" style="width:100%;margin-top:6px;accent-color:var(--ap)" oninput="updateProgress('ap',this.value)">
+      </div>
+    </div>
+    <div class="big-card" style="border-color:var(--va)">
+      <div style="display:flex;justify-content:space-between">
+        <span class="subject-badge" style="background:var(--va-bg);color:var(--va)">COMP2026 · Visual Analytics</span>
+        <span class="weight-tag" style="color:var(--va)">30%</span>
+      </div>
+      <div class="title">Group applied project</div>
+      <div class="desc">Multi-dimensional data visualisation + ~1000 word report. Max 2 students. Submit to vUWS.</div>
+      <div class="due" style="color:var(--va)">Due end of Week 14 (Jun 7)</div>
+      <div class="tip" style="background:var(--va-bg);color:var(--va)">👥 Coordinate with group now. Start properly after QC + AP done.</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress</span><span id="va-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="va-bar" style="width:0%;background:var(--va)"></div></div>
+        <input type="range" min="0" max="100" value="0" id="va-slider" style="width:100%;margin-top:6px;accent-color:var(--va)" oninput="updateProgress('va',this.value)">
+      </div>
+    </div>
+  </div>
+
+  <!-- Attack plan -->
+  <div class="section-title" style="margin-top:8px">The attack plan — next 2 weeks</div>
+  <div class="attack-section">
+    <div class="attack-day day-blocked">
+      <div class="day-label">Fri May 8</div>
+      <div class="day-content">
+        <div class="focus">⚠️ Labs 7 & 8 (QC) — due 9 pm tonight</div>
+        <div class="tasks">All day → Labs 7 & 8 combined PDF. Check every answer before submitting. After submit: scan QC project spec.</div>
+      </div>
+    </div>
+    <div class="attack-day day-limited">
+      <div class="day-label">Sun May 10</div>
+      <div class="day-content">
+        <div class="focus">QC project + COMP1013 setup</div>
+        <div class="tasks">Morning/afternoon free. Set up your RMarkdown template + Git repo for COMP1013. Push first commit. Read QC project spec thoroughly.</div>
+      </div>
+    </div>
+    <div class="attack-day day-blocked">
+      <div class="day-label">Mon May 11</div>
+      <div class="day-content">
+        <div class="focus">Mon morning: VA Prac 9 · Uni 11am–9pm</div>
+        <div class="tasks">Pre-11am: VA Prac 9 (quick, easy). Evening blocked by Tier 2 Showroom session.</div>
+      </div>
+    </div>
+    <div class="attack-day day-free">
+      <div class="day-label">Tue May 12 🔥</div>
+      <div class="day-content">
+        <div class="focus">FREE ALL DAY — split between QC project + COMP1013</div>
+        <div class="tasks">Morning session (9am–1pm): COMP1013 R assignment — code the main analysis + write report sections. Afternoon session (2pm–7pm): QC Applied Project — quantum programming + derivations. Git commit COMP1013 work at end of day.</div>
+      </div>
+    </div>
+    <div class="attack-day day-blocked">
+      <div class="day-label">Wed May 13</div>
+      <div class="day-content">
+        <div class="focus">Uni 9–11am, Work 11am–6pm</div>
+        <div class="tasks">Pre-9am or exactly 9–11am: quick COMP1013 polish if close to done. Then work takes over.</div>
+      </div>
+    </div>
+    <div class="attack-day day-limited">
+      <div class="day-label">Thu May 14</div>
+      <div class="day-content">
+        <div class="focus">QC Quiz 9 due 5 pm · Work 3–10pm</div>
+        <div class="tasks">Morning → 3pm: Do Quiz 9 (study Grover's algo slides first, 30 min quiz). Leftover time → COMP1013 final touches.</div>
+      </div>
+    </div>
+    <div class="attack-day day-free">
+      <div class="day-label">Fri May 15 🔥</div>
+      <div class="day-content">
+        <div class="focus">FREE ALL DAY — DSA A2 kickoff + finalize QC/AP</div>
+        <div class="tasks">Morning (9am–12pm): DSA Assignment 2 — set up project, implement first data structures. Afternoon (1pm–6pm): COMP1013 final review + submit. Continue DSA A2 setup. QC project progress.</div>
+      </div>
+    </div>
+    <div class="attack-day day-limited">
+      <div class="day-label">Sun May 17</div>
+      <div class="day-content">
+        <div class="focus">DSA A2 build session</div>
+        <div class="tasks">Morning/afternoon: Solid DSA coding session. Get core data structures implemented.</div>
+      </div>
+    </div>
+    <div class="attack-day day-free">
+      <div class="day-label">Tue May 19 🔥</div>
+      <div class="day-content">
+        <div class="focus">FREE ALL DAY — DSA A2 main build</div>
+        <div class="tasks">Full day on DSA Assignment 2. Core algorithms, trees/graphs implementation. This is your biggest DSA session before the deadline.</div>
+      </div>
+    </div>
+    <div class="attack-day day-limited">
+      <div class="day-label">Thu May 21</div>
+      <div class="day-content">
+        <div class="focus">QC Quiz 10 due 5 pm · Work 3–10pm</div>
+        <div class="tasks">Morning: Quiz 10 (Shor's algo). Pre-3pm: DSA A2 bug fixing + polishing report.</div>
+      </div>
+    </div>
+    <div class="attack-day day-free">
+      <div class="day-label">Fri May 22 ⚠️</div>
+      <div class="day-content">
+        <div class="focus">CRUNCH — DSA A2 due 5 pm · QC Labs 9&10 due 9 pm</div>
+        <div class="tasks">Morning (8am–12pm): QC Labs 9 & 10 — complete and package as PDF. Afternoon (1pm–4:30pm): DSA A2 final polish + complexity analysis write-up. 4:30pm: Submit DSA A2 to vUWS. Evening: Submit QC Labs 9&10.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week tabs -->
+  <div class="section-title">Task checklist by week</div>
+  <div class="tabs">
+    <button class="tab current active" onclick="switchTab(0,this)">W10 · Now</button>
+    <button class="tab" onclick="switchTab(1,this)">W11 · May 11–17</button>
+    <button class="tab" onclick="switchTab(2,this)">W12 · May 18–24</button>
+    <button class="tab" onclick="switchTab(3,this)">W13 · May 25–31</button>
+    <button class="tab" onclick="switchTab(4,this)">W14 · Jun 1–7</button>
+    <button class="tab" onclick="switchTab(5,this)">Exams</button>
+  </div>
+
+  <div id="wp0" class="week-panel active">
+    <div class="section-title" style="margin-bottom:8px">Free windows</div>
+    <div class="free-windows"><span class="free-window">Fri all day (Labs 7&8)</span><span class="free-window">Thu morning (before 5pm)</span></div>
+    <div id="tasks-w0"></div>
+    <div class="rec" style="background:var(--amber-bg);color:var(--amber)">📌 All of Friday goes to Labs 7 & 8. Study Deutsch-Jozsa content first, then do the lab — the marking is strict (every answer must be correct for 5/5 marks).</div>
+  </div>
+
+  <div id="wp1" class="week-panel">
+    <div class="section-title" style="margin-bottom:8px">Free windows</div>
+    <div class="free-windows"><span class="free-window">Tue ALL DAY 🔥</span><span class="free-window">Fri ALL DAY 🔥</span><span class="free-window">Thu morning → 3pm</span><span class="free-window">Mon morning (VA prac 9)</span></div>
+    <div id="tasks-w1"></div>
+    <div class="rec" style="background:var(--amber-bg);color:var(--amber)">📌 Tue = QC project + COMP1013 kickoff. Fri = DSA A2 setup + COMP1013 progress. Init your Git repo for COMP1013 on Tuesday — commits need to be spread across weeks.</div>
+  </div>
+
+  <div id="wp2" class="week-panel">
+    <div class="section-title" style="margin-bottom:8px">Free windows</div>
+    <div class="free-windows"><span class="free-window">Tue ALL DAY 🔥 — DSA A2 build</span><span class="free-window">Fri ALL DAY 🔥 — DSA submit + QC labs</span><span class="free-window">Thu morning → 3pm</span></div>
+    <div id="tasks-w2"></div>
+    <div class="rec" style="background:var(--red-bg);color:var(--red)">🔥 Crunch week. DSA A2 (30%) AND QC Labs 9&10 both due Fri May 22. Tue = pure DSA build. Thu morning = Quiz 10. Fri morning = QC labs, Fri afternoon = DSA final + submit by 5pm. QC labs by 9pm.</div>
+  </div>
+
+  <div id="wp3" class="week-panel">
+    <div class="section-title" style="margin-bottom:8px">Free windows</div>
+    <div class="free-windows"><span class="free-window">Tue ALL DAY 🔥</span><span class="free-window">Fri ALL DAY 🔥</span><span class="free-window">Thu morning → 3pm</span></div>
+    <div id="tasks-w3"></div>
+    <div class="rec" style="background:var(--amber-bg);color:var(--amber)">📌 COMP1013 assignment (40%) should be done or almost done. Tue/Fri = QC project final push + VA group project. DSA Q5 quiz is light. Revise DSA data structures — exam is 50%.</div>
+  </div>
+
+  <div id="wp4" class="week-panel">
+    <div class="section-title" style="margin-bottom:8px">Free windows</div>
+    <div class="free-windows"><span class="free-window">Tue ALL DAY 🔥</span><span class="free-window">Fri ALL DAY 🔥</span><span class="free-window">Thu morning → 3pm</span></div>
+    <div id="tasks-w4"></div>
+    <div class="rec" style="background:var(--red-bg);color:var(--red)">🔥 Final boss week. QC project (20%) + QC labs + VA group project (30%) + VA intra-term exam all land. Tue = last QC project + VA final. Fri = submit everything. Revise VA Weeks 1–13 for the closed-book exam.</div>
+  </div>
+
+  <div id="wp5" class="week-panel">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px">
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-size:11px;color:var(--qc);font-weight:600;margin-bottom:6px">COMP3033 — Quantum</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Final exam</div>
+        <div style="font-size:12px;color:var(--muted)">40% weight · 2 hrs · 40 MCQ + 5 short answer. Covers all 12 lectures + lab content.</div>
+      </div>
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-size:11px;color:var(--dsa);font-weight:600;margin-bottom:6px">COMP2009 — DSA</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Final exam</div>
+        <div style="font-size:12px;color:var(--muted)">50% weight · 2 hrs · closed book. MCQ + short answer + programming tasks. Your biggest exam.</div>
+      </div>
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-size:11px;color:var(--ap);font-weight:600;margin-bottom:6px">COMP1013 — Analytics Prog</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Oral exam</div>
+        <div style="font-size:12px;color:var(--muted)">40% weight · 10–15 min face-to-face. Must score ≥50% or assignment mark is capped. Explain your code verbally.</div>
+      </div>
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;opacity:0.5">
+        <div style="font-size:11px;color:var(--va);font-weight:600;margin-bottom:6px">COMP2026 — Visual Analytics</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">No exam</div>
+        <div style="font-size:12px;color:var(--muted)">Replaced by Week 14 intra-term exam. Nothing due in exam period.</div>
+      </div>
+    </div>
+    <div class="rec" style="background:var(--amber-bg);color:var(--amber)">📌 DSA exam is 50% — your top study priority. COMP1013 oral = practice explaining code out loud. QC: use weekly quiz questions as revision guide. Week 15 is your study week before exams start Jun 15.</div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes-section">
+    <div class="section-title" style="margin-bottom:0">Notes & reminders</div>
+    <textarea id="notes-ta" placeholder="Add any notes here — saved automatically in your browser..."></textarea>
+    <div style="display:flex;align-items:center">
+      <button class="notes-save" onclick="saveNotes()">Save notes</button>
+      <span class="saved-msg" id="saved-msg">Saved ✓</span>
+    </div>
+  </div>
+
+  <footer>Uni Tracker · Autumn 2026 · Western Sydney University · Open this file in any browser, progress saves locally</footer>
+</div>
+
+<script>
+const TASKS = {
+  w0: [
+    {id:'w0t1',sub:'COMP3033',subColor:'qc',text:'Quiz 8',detail:'Due today Thu May 7, 5 pm · 10 MCQ · 30 min',done:false,weight:''},
+    {id:'w0t2',sub:'COMP3033',subColor:'qc',text:'Labs 7 & 8 (combined PDF)',detail:'Due Fri May 8, 9 pm · strict marking — all answers must be correct for 5/5',done:false,weight:'part of 20%'},
+    {id:'w0t3',sub:'COMP1013',subColor:'ap',text:'Online quiz (in-class tutorial)',detail:'30 min · during tutorial session · part of 20%',done:false,weight:''},
+    {id:'w0t4',sub:'COMP2009',subColor:'dsa',text:'Practical 7',detail:'Onsite class',done:true,weight:''},
+    {id:'w0t5',sub:'COMP2026',subColor:'va',text:'Tutorial / Prac 8',detail:'In-class',done:true,weight:''},
+  ],
+  w1: [
+    {id:'w1t1',sub:'COMP3033',subColor:'qc',text:'Quiz 9',detail:'Due Thu May 14, 5 pm · Grover\'s algorithm · 10 MCQ',done:false,weight:''},
+    {id:'w1t2',sub:'COMP2009',subColor:'dsa',text:'Practical 8',detail:'Due beginning of Monday class · B-trees and heaps',done:false,weight:''},
+    {id:'w1t3',sub:'COMP2009',subColor:'dsa',text:'Online Quiz 4',detail:'Due via vUWS · part of 6%',done:false,weight:''},
+    {id:'w1t4',sub:'COMP2026',subColor:'va',text:'Tutorial / Prac 9',detail:'Monday morning — easy',done:false,weight:''},
+    {id:'w1t5',sub:'COMP3033',subColor:'qc',text:'Applied project — major progress session',detail:'Tue all day + Fri sessions',done:false,weight:'ongoing'},
+    {id:'w1t6',sub:'COMP1013',subColor:'ap',text:'R assignment — kickoff + Git setup',detail:'Tue session · init repo · first commits',done:false,weight:'40% total'},
+  ],
+  w2: [
+    {id:'w2t1',sub:'COMP3033',subColor:'qc',text:'Quiz 10',detail:'Due Thu May 21, 5 pm · Shor\'s algorithm',done:false,weight:''},
+    {id:'w2t2',sub:'COMP3033',subColor:'qc',text:'Labs 9 & 10 (combined PDF)',detail:'Due Fri May 22, 9 pm',done:false,weight:'part of 20%'},
+    {id:'w2t3',sub:'COMP2009',subColor:'dsa',text:'Assignment 2 ← BIG ONE',detail:'Due Fri May 22, 5 pm · submit to vUWS · also need demo Week 14',done:false,weight:'30%'},
+    {id:'w2t4',sub:'COMP2009',subColor:'dsa',text:'Practical 9',detail:'Due beginning of Monday class · sorting algorithms',done:false,weight:''},
+    {id:'w2t5',sub:'COMP2026',subColor:'va',text:'Tutorial / Prac 10',detail:'Monday morning',done:false,weight:''},
+  ],
+  w3: [
+    {id:'w3t1',sub:'COMP3033',subColor:'qc',text:'Quiz 11',detail:'Due Thu May 28, 5 pm · Quantum error correction',done:false,weight:''},
+    {id:'w3t2',sub:'COMP1013',subColor:'ap',text:'R assignment ← SUBMIT',detail:'Due Week 13 · RMarkdown PDF + Git repo · ~2000 words',done:false,weight:'40%'},
+    {id:'w3t3',sub:'COMP2009',subColor:'dsa',text:'Online Quiz 5',detail:'Due via vUWS · part of 6%',done:false,weight:''},
+    {id:'w3t4',sub:'COMP2026',subColor:'va',text:'Tutorial / Prac 11',detail:'Monday morning',done:false,weight:''},
+    {id:'w3t5',sub:'COMP2026',subColor:'va',text:'Group project — push session',detail:'Coordinate with group. Tue/Fri sessions.',done:false,weight:'30% total'},
+  ],
+  w4: [
+    {id:'w4t1',sub:'COMP3033',subColor:'qc',text:'Quiz 12',detail:'Due Thu Jun 4, 5 pm · final quiz',done:false,weight:''},
+    {id:'w4t2',sub:'COMP3033',subColor:'qc',text:'Labs 11 & 12 (combined PDF)',detail:'Due Fri Jun 5, 9 pm',done:false,weight:'part of 20%'},
+    {id:'w4t3',sub:'COMP3033',subColor:'qc',text:'Applied project ← SUBMIT',detail:'Due Fri Jun 5, 9 pm · maths + code + report · submit to Turnitin',done:false,weight:'20%'},
+    {id:'w4t4',sub:'COMP2009',subColor:'dsa',text:'Practical 10',detail:'Due beginning of Monday class',done:false,weight:''},
+    {id:'w4t5',sub:'COMP2009',subColor:'dsa',text:'Assignment 2 demonstration',detail:'In-class · explain code + complexity verbally',done:false,weight:'part of 30%'},
+    {id:'w4t6',sub:'COMP1013',subColor:'ap',text:'Online quiz (in-class tutorial)',detail:'30 min · during tutorial session',done:false,weight:''},
+    {id:'w4t7',sub:'COMP2026',subColor:'va',text:'Group applied project ← SUBMIT',detail:'Due end of Week 14 · visualisation + ~1000 word report',done:false,weight:'30%'},
+    {id:'w4t8',sub:'COMP2026',subColor:'va',text:'Intra-term exam',detail:'During lecture hour · 60 min · 50 MCQ · closed book · all Weeks 1–13',done:false,weight:'20%'},
+  ],
+};
+
+const SUB_COLORS = {
+  qc:{bg:'var(--qc-bg)',color:'var(--qc)'},
+  dsa:{bg:'var(--dsa-bg)',color:'var(--dsa)'},
+  ap:{bg:'var(--ap-bg)',color:'var(--ap)'},
+  va:{bg:'var(--va-bg)',color:'var(--va)'},
+};
+
+const DEADLINES = [
+  {label:'Labs 7 & 8',date:'2026-05-08T21:00:00',color:'var(--amber)'},
+  {label:'DSA A2',date:'2026-05-22T17:00:00',color:'var(--red)'},
+  {label:'QC Labs 9&10',date:'2026-05-22T21:00:00',color:'var(--qc)'},
+  {label:'COMP1013 assign.',date:'2026-05-29T23:59:00',color:'var(--ap)'},
+  {label:'QC project',date:'2026-06-05T21:00:00',color:'var(--qc)'},
+  {label:'VA group project',date:'2026-06-07T23:59:00',color:'var(--va)'},
+  {label:'Exams start',date:'2026-06-15T09:00:00',color:'var(--dsa)'},
+];
+
+function loadState(){
+  try{return JSON.parse(localStorage.getItem('uni_tracker_v2')||'{}')}catch{return{}}
+}
+function saveState(state){
+  try{localStorage.setItem('uni_tracker_v2',JSON.stringify(state))}catch{}
+}
+
+let state = loadState();
+
+function buildTasks(){
+  Object.keys(TASKS).forEach(wk=>{
+    const container=document.getElementById('tasks-'+wk.replace('w',''));
+    if(!container)return;
+    container.innerHTML='';
+    TASKS[wk].forEach(task=>{
+      const isDone=state['task_'+task.id]??task.done;
+      const c=SUB_COLORS[task.subColor];
+      const div=document.createElement('div');
+      div.className='task-item'+(isDone?' done':'');
+      div.id='taskrow_'+task.id;
+      div.innerHTML=`
+        <div class="checkbox${isDone?' checked':''}" id="cb_${task.id}" onclick="toggleTask('${task.id}')">
+          ${isDone?'<span style="font-size:10px;color:var(--green)">✓</span>':''}
+        </div>
+        <div class="task-text" style="flex:1">
+          <div><span class="task-badge" style="background:${c.bg};color:${c.color}">${task.sub}</span></div>
+          <div class="title">${task.text}</div>
+          <div class="detail">${task.detail}</div>
+        </div>
+        ${task.weight?`<div class="task-weight" style="color:${c.color}">${task.weight}</div>`:''}
+      `;
+      container.appendChild(div);
+    });
+  });
+}
+
+function toggleTask(id){
+  const current=state['task_'+id]??false;
+  state['task_'+id]=!current;
+  saveState(state);
+  const row=document.getElementById('taskrow_'+id);
+  const cb=document.getElementById('cb_'+id);
+  row.classList.toggle('done',!current);
+  cb.classList.toggle('checked',!current);
+  cb.innerHTML=!current?'<span style="font-size:10px;color:var(--green)">✓</span>':'';
+}
+
+function updateProgress(key,val){
+  const n=parseInt(val);
+  document.getElementById(key+'-pct').textContent=n+'%';
+  document.getElementById(key+'-bar').style.width=n+'%';
+  state['progress_'+key]=n;
+  saveState(state);
+}
+
+function loadProgress(){
+  ['dsa','qc','ap','va'].forEach(k=>{
+    const val=state['progress_'+k]??0;
+    document.getElementById(k+'-slider').value=val;
+    document.getElementById(k+'-pct').textContent=val+'%';
+    document.getElementById(k+'-bar').style.width=val+'%';
+  });
+}
+
+function switchTab(idx,btn){
+  document.querySelectorAll('.week-panel').forEach((p,i)=>p.classList.toggle('active',i===idx));
+  document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active')});
+  btn.classList.add('active');
+}
+
+function buildCountdowns(){
+  const now=new Date();
+  const wrap=document.getElementById('countdowns');
+  wrap.innerHTML='';
+  DEADLINES.forEach(d=>{
+    const target=new Date(d.date);
+    const diff=Math.ceil((target-now)/(1000*60*60*24));
+    if(diff<-1)return;
+    const pill=document.createElement('div');
+    pill.className='countdown-pill';
+    const label=diff<=0?'TODAY':diff===1?'TOMORROW':diff+'d away';
+    pill.innerHTML=`<span class="dot" style="background:${d.color}"></span><span class="days" style="color:${d.color}">${label}</span><span class="desc">${d.label}</span>`;
+    wrap.appendChild(pill);
+  });
+}
+
+function updateHeader(){
+  const now=new Date();
+  const options={weekday:'long',year:'numeric',month:'long',day:'numeric'};
+  document.getElementById('date-display').textContent='Today · '+now.toLocaleDateString('en-AU',options);
+  const sem_start=new Date('2026-03-02');
+  const week=Math.ceil((now-sem_start)/(7*24*60*60*1000));
+  document.getElementById('current-week').textContent='W'+Math.min(week,14);
+  const dsa=new Date('2026-05-22T17:00:00');
+  const qc=new Date('2026-06-05T21:00:00');
+  document.getElementById('days-dsa').textContent=Math.max(0,Math.ceil((dsa-now)/(1000*60*60*24)))+'d';
+  document.getElementById('days-qc').textContent=Math.max(0,Math.ceil((qc-now)/(1000*60*60*24)))+'d';
+  const w14end=new Date('2026-06-07');
+  const wleft=Math.max(0,Math.ceil((w14end-now)/(7*24*60*60*1000)));
+  document.getElementById('weeks-left').textContent=wleft;
+}
+
+function saveNotes(){
+  state.notes=document.getElementById('notes-ta').value;
+  saveState(state);
+  const msg=document.getElementById('saved-msg');
+  msg.style.opacity='1';
+  setTimeout(()=>msg.style.opacity='0',2000);
+}
+
+function loadNotes(){
+  if(state.notes)document.getElementById('notes-ta').value=state.notes;
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  updateHeader();
+  buildCountdowns();
+  buildTasks();
+  loadProgress();
+  loadNotes();
+  setInterval(buildCountdowns,60000);
+});
+</script>
+</body>
+</html>
